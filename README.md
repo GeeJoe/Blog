@@ -2,7 +2,7 @@
 
 ## Android
 
-1. Android 中奇奇怪怪的知识又增长了（TODO）
+1. [Android 中奇奇怪怪的知识又增长了](Android/Android 中奇奇怪怪的知识又增长了.md)
 2. 一分钟快速实现一个富文本编辑器（TODO）
 3. 盘点那些年我们使用过的设计模式（TODO）
 4. Android Jetpack 知多少（TODO）
