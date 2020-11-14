@@ -7,7 +7,7 @@
 3. [盘点那些年我们使用过的设计模式](Android/盘点那些年我们使用过的架构模式.md)
 4. [Android Jetpack 知多少](Android/AndroidJetpack知多少)
 5. [一张图让你搞懂 View 绘制流程](Android/一张图让你搞懂View的绘制流程.md)
-6. [彻底搞懂 Android 事件分发机制](Android/一张图让你搞懂View的绘制流程.md)
+6. [彻底搞懂 Android 事件分发机制](Android/彻底搞懂View事件分发机制.md)
 7. [一眼看穿 SharePreferences](Android/一眼看穿SharePreferences.md)
 8. [Android 软件盘相关的知识点](Android/Android软键盘相关的知识点.md)
 
