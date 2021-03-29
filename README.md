@@ -18,7 +18,7 @@
 ## Java
 
 1. [Java 中的动态代理以及应用场景](Java/Java中的动态代理以及应用场景.md)
-2. [三分钟了解自定义注解以及 APT 的应用](Java/三分钟了解自定义注解以及APT的应用.md)
+2. [编译时注解生成代码](Java/编译时注解生成代码.md)
 3. [你真的了解 try catch 吗](Java/你真的了解trycatch吗.md)
 4. [你真的会用 Java 泛型吗](Java/你真的会用Java泛型吗.md)
 5. [HashMap 源码分析](Java/HashMap源码分析.md)
