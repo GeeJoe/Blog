@@ -119,24 +119,24 @@ mHandler?.post {
 6. 最终会走到 Handler 的 `handleMessage` 方法内，我们在这里实现处理消息的逻辑
 
    ```java
-   public void dispatchMessage(@NonNull Message msg) {
-           if (msg.callback != null) {
-   						// 1. post runnable 或者 Message 带 callback 会走到这里来
-               handleCallback(msg);
-           } else {
-   						// 2. 发送一个不带 callback 的 Message 会走到这里来
-   						// 3. 如果实例化 Handler 的时候传了 callback, 就在 callback 中处理消息
-               if (mCallback != null) {
-   								// 4. 如果 Handler 构造时传入的 callback 处理完消息返回了 true, 则消息处理完毕
-                   if (mCallback.handleMessage(msg)) {
-                       return;
-                   }
-               }
-   						// 5. 如果 Handler 构造时传入的 callback 处理完消息返回了 false, 则消息继续交给 Handler 子类实现的 handleMessage 处理
-   						// 6. Hanlder 默认的 handleMessage 是空实现
-               handleMessage(msg);
-           }
-   }
+     public void dispatchMessage(@NonNull Message msg) {
+         if (msg.callback != null) {
+             // 1. post runnable 或者 Message 带 callback 会走到这里来
+             handleCallback(msg);
+         } else {
+             // 2. 发送一个不带 callback 的 Message 会走到这里来
+             // 3. 如果实例化 Handler 的时候传了 callback, 就在 callback 中处理消息
+             if (mCallback != null) {
+                 // 4. 如果 Handler 构造时传入的 callback 处理完消息返回了 true, 则消息处理完毕
+                 if (mCallback.handleMessage(msg)) {
+                     return;
+                 }
+             }
+             // 5. 如果 Handler 构造时传入的 callback 处理完消息返回了 false, 则消息继续交给 Handler 子类实现的 handleMessage 处理
+             // 6. Hanlder 默认的 handleMessage 是空实现
+             handleMessage(msg);
+         }
+     }
    ```
 
 ## 总结
