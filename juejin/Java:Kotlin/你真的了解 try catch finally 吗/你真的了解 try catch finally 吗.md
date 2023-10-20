@@ -1,3 +1,5 @@
+![java-try-catch-finally](你真的了解 try catch finally 吗.assets/java-try-catch-finally.png)
+
 # try catch finally 执行的顺序
 
 ## 先给结论
