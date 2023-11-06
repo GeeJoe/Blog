@@ -339,7 +339,7 @@ public static abstract class Behavior<V extends View> {
 
 是的没错，但这只回答了一半。做过自定义 View 的朋友们都知道，在 xml 中定义的属性，我们一般会在对应的 View 的构造方法里面通过 `TypedArray` 解析出来，`layout_behavior` 也是这样吗？`CoordinatorLayout` 的子孩子可以是任意类型的 View，难道要在所有的 View 的构造方法里面去解析 `layout_behavior` 吗？如果是的话那只能把这个逻辑放在最基础的 View 构造方法里面了。但是翻遍了 View 的源码也没有找到 `layout_behavior` 的身影。而且想想也不合理，`Behavior` 是 `CoordinatorLayout` 特有的东西，如果把 `Behavior` 相关的逻辑下沉到 View，那就十分耦合了。 
 
-我们回到 `CoordinatorLayout` 身上，他是通过拿到子 View 的 `LayoutParams` 然后通过 `LayoutParams.getBehavior()` 拿到 Behavior 的
+我们回到 `CoordinatorLayout` 身上，他是通过拿到子 View 的 `LayoutParams` 然后通过 `LayoutParams.getBehavior()` 拿到 Behavior 的。那我们看看 `LayoutParams` 是怎么定义的：
 
 ```java
 class CoordinatorLayout {
@@ -489,12 +489,11 @@ class CoordinatorLayout {
 
 至此我们总结下 Behavior 初始化逻辑：
 
-1. 可以通过 xml 设置 `layout_behavior` 来指定 `Behavior`
-2. 子 View 实现了 `AttachedBehavior` 接口，通过 `getBehavior` 方法返回对应的 `Behavior`
-3. `CoordinatorLayout.LayoutParams` 构造方法中解析 `layout_behavior` ，通过反射实例化 `behavior` 对象
-4. `CoordinatorLayout` `onMeasure()` 的时候会调用 `prepareChildren()` 内部调用 `getResolvedLayoutParams()` 判断如果子 View 实现了 `AttachedBehavior` 就通过 `getBehavior` 获取 `behavior` 对象保存在 ``CoordinatorLayout.LayoutParams` 中
-5. `prepareChildren` 中还遍历所有子 View 调用了子 View 的 `Behavior.layoutDependOn()` 来建立所有子 View 之间的依赖关系，最终形成一个有向无环图，为后续回调 `onDependentViewChanged()` 和 `onDependentViewRemoved()` 用。 
-6. `CoordiantorLayout` 通过获取子 View 的 ``CoordinatorLayout.LayoutParams` 来获取 `behavior`
+1. 可以通过 xml 设置 `layout_behavior` 来指定 `Behavior`；`CoordinatorLayout.LayoutParams` 构造方法中解析 `layout_behavior` ，通过反射实例化 `behavior` 对象
+2. 如果子 View 实现了 `AttachedBehavior` 接口，通过 `getBehavior` 指定 `Behavior`
+3. `CoordinatorLayout` `onMeasure()` 的时候会调用 `prepareChildren()` 内部调用 `getResolvedLayoutParams()` 判断如果子 View 实现了 `AttachedBehavior` 就通过 `getBehavior` 获取 `behavior` 对象保存在 ``CoordinatorLayout.LayoutParams` 中
+4. `prepareChildren` 中还遍历所有子 View 调用了子 View 的 `Behavior.layoutDependOn()` 来建立所有子 View 之间的依赖关系，最终形成一个有向无环图，为后续回调 `onDependentViewChanged()` 和 `onDependentViewRemoved()` 用。 
+5. `CoordiantorLayout` 通过获取子 View 的 ``CoordinatorLayout.LayoutParams` 来获取先前初始化好的 `behavior`
 
 ## 嵌套滑动
 
@@ -653,7 +652,7 @@ public static abstract class Behavior<V extends View> {
 
 ```
 
-可以看到，事件最终又交给了子 View 的 Behavior！
+可以看到，**嵌套滑动事件最终又交给了子 View 的 Behavior！**
 
 最后我们再看下 `Behavior` 中嵌套滑动中各个回调方法具体的含义是什么
 
@@ -674,9 +673,12 @@ public static abstract class Behavior<V extends View> {
 1. `CoordinatorLayout` 事件分发给所有子 View 的 `Behavior`，由子 View 的 `Behavior` 决定是否要拦截事件，以及拦截之后如何处理事件；
 2. 当发生嵌套滑动的时候，事件先交给 `CoordinatorLayout` 处理，`CoordinatorLayout` 又将事件传递给所有子 View 的 `Behavior` 处理；
 3. `Behavior` 是所有事件的拦截者，在这里可以拦截到各种滑动事件以此处理自己的逻辑，同时还能和其他兄弟 View 建立依赖关系，在他们发生位置大小变化的时候也能收到回调，方便地处理自己的逻辑；
-4. 以上就是 `CoordinatorLayout` 协调布局所有子 View 间 “协同” 的秘密！
 
-感觉功力瞬间大增，是时候开始解决开头遇到的两个问题了！
+
+
+以上就是 `CoordinatorLayout` 协调布局所有子 View 间 “协同” 的秘密！
+
+看完是不是感觉功力瞬间大增，是时候开始解决开头遇到的两个问题了！
 
 <img src="彻底搞懂 CoordinatorLayout + Behavior.assets/stodownload.gif" alt="stodownload" style="zoom:25%;" />
 
@@ -686,7 +688,7 @@ public static abstract class Behavior<V extends View> {
 
 分析抖动问题的表现，是由快速滑动引起的，因此首先怀疑是否嵌套滑动 fling 导致的。当我们手指快速滑动 `RecyclerView` 的时候，会触发 `RecyclerView` 的 `fling()` 方法；同时当我们快速滑动 `AppBarLayout` 的时候，通过阅读源码，发现也会调用 `fling()`
 
-AppBarLayout 的 Behavior 是 AppBarLayout.Behavior，继承自 HeaderBehavior
+`AppBarLayout` 的 `Behavior` 是 `AppBarLayout.Behavior`，继承自 `HeaderBehavior`
 
 ```java
 // HeaderBehavior
@@ -735,11 +737,11 @@ public boolean onTouchEvent(
 
 ```
 
-那么抖动问题就很好猜了：快速上滑 `AppBarLayout` 触发了一个向上的 `fling()`，在 fling 还没有结束的时候，快速向下滑动 `RecyclerView` 会触发一个向下的 `fling()`，此时两个相反方向的 fling 就会造成开头动图中抖动的问题了。
+那么抖动问题就很好猜了：快速上滑 `AppBarLayout` 触发了一个向上的 `fling()`，在 `fling()` 还没有结束的时候，快速向下滑动 `RecyclerView` 会触发一个向下的 `fling()`，此时两个相反方向的 `fling()` 就会造成开头动图中抖动的问题了。
 
 解决思路就是：当 `RecyclerView` 触发嵌套 `fling()` 的时候，取消掉正在进行的 `AppBarLayout` 的 `fling()`
 
-这里要自定义一个 `AppBarLayout` 的 `Behavior`，覆写它的 `onNestedPreFling` 方法，在里面通过反射调用取消 `AppBarLayout` 的 fling()
+这里要自定义一个 `AppBarLayout` 的 `Behavior`，覆写它的 `onNestedPreFling` 方法，在里面通过反射调用取消 `AppBarLayout` 的 `fling()`
 
 > 由于 `AppBarLayout` 的 `Behavior` 是 `protected` 的，只能在子类使用，因此这里只能自定义一个 `AppBarLayout`
 
@@ -839,7 +841,7 @@ class AppBarLayout.BaseBehavior {
 }
 ```
 
-`onStartNestedScroll` 置为空，`onStopNestedScroll` 把之前嵌套滑动的可滚动组件缓存起来。从开头录屏的操作路径上看，一开始滑动了第一屏的 `RecyclerView`, 因此此时这里的 `target` 其实就是 `RecyclerView`，问题出现在 ViewPager 切到第二页的时候，第一页的 ViewHolder 离屏了，View 会被 remove 掉，而 `View.isShown()` 的判断是这样的
+`onStartNestedScroll` 置为空，`onStopNestedScroll` 把之前嵌套滑动的可滚动组件缓存起来。从开头录屏的操作路径上看，一开始滑动了第一屏的 `RecyclerView`, 因此此时这里的 `target` 其实就是 `RecyclerView`，问题出现在 ViewPager 切到第二页的时候，第一页的 `ViewHolder` 离屏了，View 会被 remove 掉，而 `View.isShown()` 的判断是这样的
 
 ```java
   public boolean isShown() {
@@ -868,7 +870,7 @@ class AppBarLayout.BaseBehavior {
 
 看到这里是不是觉得 `AppBarLayout` 这个代码写的有问题！？解决思路是什么呢？从源码中我们看到 `canDragView` 中优先判断 `onDragCallback` 是否为空，不为空的时候用 `onDragCallback` 返回值来判断是否可滑动。
 
-因此解决思路就是设置一个自定义的 `onDragCallback` 或者直接定义 Behavior 覆写 `canDragView()`。因为前面的一个问题采用了自定义 `Behavior`，因此这里也继续用自定义 `Behavior` 的方式。
+因此解决思路就是设置一个自定义的 `onDragCallback` 或者直接自定义 `Behavior` 覆写 `canDragView()`。因为前面的一个问题采用了自定义 `Behavior`，因此这里也继续用自定义 `Behavior` 的方式。
 
 > 由于 `AppBarLayout` 的 `Behavior` 是 `protected` 的，只能在子类使用，因此这里和前面一样只能自定义一个 `AppBarLayout`，同时因为 canDragView 被覆写成 default 可见性，只能在包内覆写，因此这里还要求自定义 `AppBarLayout 放在 com.google.android.material.appbar` 包下
 
