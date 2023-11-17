@@ -596,7 +596,7 @@ public static abstract class Behavior<V extends View> {
 
 这里直接借用大神文章中的一张图来总结嵌套滑动事件分发的机制
 
-![NestedScrolling交互 流程示意图.png](彻底搞懂 CoordinatorLayout + Behavior.assets/17293f06f781ebc9~tplv-t2oaga2asx-zoom-in-crop-mark:1512:0:0:0.awebp)
+![NestedScrolling交互 流程示意图.png](../../../../../Downloads/17293f06f781ebc9~tplv-t2oaga2asx-zoom-in-crop-mark:1512:0:0:0.awebp.png)
 
 总的来说，当嵌套滑动的时候 `NestedScrollingChild` 会先将事件交 `NestedScrollingParent` 处理，然后自己再处理剩余的滑动距离。前面我们讲到 `RecyclerView` 实现了 `NestedScrollingChild` 接口，`CoordinatorLayout` 实现了 `NestedScrollingParent` 接口，因此，嵌套滑动时，事件又先回到了 `CoordinatorLayout` 上。
 
